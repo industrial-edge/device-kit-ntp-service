@@ -1,0 +1,18 @@
+[Unit]
+Description=Device Model NTP Service
+After=dm-network.service
+
+[Service]
+ExecStartPre=mkdir -p /var/run/devicemodel
+ExecStart=/usr/bin/ntpservice unix /var/run/devicemodel/ntp.sock
+ExecReload=/bin/kill -9 $MAINPID
+Type=simple
+KillMode = process
+TimeoutStartSec=0
+TimeoutSec=0
+RestartSec=5s
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
