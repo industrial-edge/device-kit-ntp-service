@@ -1,0 +1,54 @@
+/*
+ * Copyright (c) 2021 Siemens AG
+ * Licensed under the MIT license
+ * See LICENSE file in the top-level directory
+ */
+
+
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+option go_package = ".;siemens_iedge_dmapi_v1";
+package siemens.iedge.dmapi.ntp.v1;
+
+// Type contains an array of ntp server addresses.
+message Ntp  {
+   repeated string ntpServer=1;  // array of multiple ntp server address.
+}
+// Peer Details from ntpq -p output
+message PeerDetails{
+    string remoteServer =1; // NTP server address
+    string referenceID = 2; // Reference id for the NTP server
+    string stratum =3; // Stratum for the NTP Server
+    string type =4; // Type of server (local, unicast, multicast, or broadcast)
+    int32 poll =5; // How frequently to query server (in seconds)
+    int32 when= 6; // How many seconds passed after the last poll.
+    string reach =7; // octal bitmask of success or failure of last 8 queries (left-shifted). eg:375
+    float delay =8; // network round trip time (in milliseconds)
+    float offset=9; // difference between local clock and remote clock (in milliseconds)
+    float jitter=10; // Difference of successive time values from server (in milliseconds)
+}
+// Type for ntp current sync status
+message Status{
+   
+    bool isNtpServiceRunning = 1; // indicates that ntp service is running or not
+    bool isSynced = 2; // indicates NTP server synced or not
+    string lastConfigurationTime = 3; // time of the last performed iedk ntp configuration.
+    string lastSyncTime =4; // time of the last ntp sync operation.
+    repeated PeerDetails peerDetails=5; // NTPQ peer information array. Only exist after ntp configuration done.
+}
+
+// Ntp service ,uses a UNIX Domain Socket "/var/run/devicemodel/ntp.sock" for GRPC communication.
+// protoc  generates both client and server instance for this Service.
+// GRPC Status codes : https://developers.google.com/maps-booking/reference/grpc-api/status_codes .
+service NtpService {
+    
+    //Set ntp server
+    rpc SetNtpServer(Ntp) returns(google.protobuf.Empty);
+   
+    //Returns ntp servers
+    rpc GetNtpServer(google.protobuf.Empty) returns(Ntp);
+  
+    //Returns NTP Status message.
+    rpc GetStatus(google.protobuf.Empty) returns (Status);
+  
+}
