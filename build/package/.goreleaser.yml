@@ -49,8 +49,9 @@ nfpms:
     - ntpdate
     - systemd
 
-  files:
-    "dm-ntp.service": "/lib/systemd/system/dm-ntp.service"
+  contents:
+    - src: "dm-ntp.service"
+      dst: "/lib/systemd/system/dm-ntp.service"
 
   # Override default /usr/local/bin destination for binaries
   bindir: /usr/bin
