@@ -172,7 +172,7 @@ func (n ntpServer) SetNtpServer(ctx context.Context, serverList *v1.Ntp) (*empty
 	ntpSettingTime := currentTime.Format("2006.01.02 15:04:05")
 	log.Println("Ntp Last Setting Time : " + ntpSettingTime)
 
-	f, err := os.OpenFile("/opt/lastntpconfigdate.rec", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	f, err := os.OpenFile("/etc/lastntpconfigdate.rec", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Println("Error Opening file : ")
 	} else {

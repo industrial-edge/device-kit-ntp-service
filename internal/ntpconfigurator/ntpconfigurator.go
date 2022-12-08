@@ -42,7 +42,7 @@ const shell = "bash"
 const restartNtpService = "/usr/bin/systemctl restart ntp.service"
 const ntpDate = "ntpdate "
 const ntpConfigPath = "/etc/ntp.conf"
-const ntplastconfigPath = "/opt/lastntpconfigdate.rec"
+const ntplastconfigPath = "/etc/lastntpconfigdate.rec"
 const ntpCheckRunning = "/usr/bin/systemctl is-active --quiet ntp"
 const ntpCheckPeers = "ntpq -pn"
 
