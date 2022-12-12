@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 	"errors"
-	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/protobuf/types/known/emptypb"
 	v1 "ntpservice/api/siemens_iedge_dmapi_v1"
 	"os/exec"
 	"testing"
@@ -124,7 +124,7 @@ func Test_GetNtpServerFailure(t *testing.T) {
 	if err != nil {
 		assert.Nil(t, err, "Did not get expected result. Wanted: Nil, got: %q", err)
 	}
-	_, err2 := tApp.serverInstance.GetNtpServer(dummyctx, &empty.Empty{})
+	_, err2 := tApp.serverInstance.GetNtpServer(dummyctx, &emptypb.Empty{})
 
 	//Kill the goroutine
 	tApp.done <- true

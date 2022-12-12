@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Siemens AG
+ * Copyright (c) 2022 Siemens AG
  * Licensed under the MIT license
  * See LICENSE file in the top-level directory
  */
@@ -19,7 +19,7 @@ import (
 	ntpcf "ntpservice/internal/ntpconfigurator"
 	"os"
 
-	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,6 +31,7 @@ type DeviceModelService interface {
 }
 
 type ntpServer struct {
+	v1.UnimplementedNtpServiceServer
 	channelWr       chan []string
 	errWr           chan error
 	ntpConfigurator *ntpcf.NtpConfigurator
@@ -155,7 +156,7 @@ func (app *MainApp) StartApp() {
 //Implementation of RPC method given v1 proto file
 
 // SetNtpServer This method applies the ntp configurations sent by the client
-func (n ntpServer) SetNtpServer(ctx context.Context, serverList *v1.Ntp) (*empty.Empty, error) {
+func (n ntpServer) SetNtpServer(ctx context.Context, serverList *v1.Ntp) (*emptypb.Empty, error) {
 	log.Println("SetNtpServer() enter")
 	log.Println("Values passed by the client to the SetNtpServer() method: ", serverList)
 	//pass the server list for WriteConfiguration
@@ -164,7 +165,7 @@ func (n ntpServer) SetNtpServer(ctx context.Context, serverList *v1.Ntp) (*empty
 	//err result
 	if err := <-n.errWr; err != nil {
 		log.Println("SetNtpServer() Failed to Set")
-		return &empty.Empty{}, status.New(codes.Unknown, "Failed to Set").Err()
+		return &emptypb.Empty{}, status.New(codes.Unknown, "Failed to Set").Err()
 	}
 
 	//Save ntp last setting time
@@ -180,11 +181,11 @@ func (n ntpServer) SetNtpServer(ctx context.Context, serverList *v1.Ntp) (*empty
 	}
 	defer f.Close()
 
-	return &empty.Empty{}, status.New(codes.OK, "fine").Err()
+	return &emptypb.Empty{}, status.New(codes.OK, "fine").Err()
 }
 
 // GetNtpServer ntp configurations in the device are sent to the client.
-func (n ntpServer) GetNtpServer(ctx context.Context, e *empty.Empty) (serverList *v1.Ntp, err error) {
+func (n ntpServer) GetNtpServer(ctx context.Context, e *emptypb.Empty) (serverList *v1.Ntp, err error) {
 	log.Println("GetNtpServer() enter")
 	valueWithServerPrefix, err := n.ntpConfigurator.GetCurrentNtpServers()
 	if err != nil {
@@ -197,7 +198,7 @@ func (n ntpServer) GetNtpServer(ctx context.Context, e *empty.Empty) (serverList
 }
 
 // GetStatus check ntp peers and synced behaviours with setting date time.
-func (n ntpServer) GetStatus(ctx context.Context, e *empty.Empty) (status *v1.Status, err error) {
+func (n ntpServer) GetStatus(ctx context.Context, e *emptypb.Empty) (status *v1.Status, err error) {
 	log.Println("GetStatus() enter")
 	status, err = n.ntpConfigurator.GetNtpStatus()
 	return status, err
