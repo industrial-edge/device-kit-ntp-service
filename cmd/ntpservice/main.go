@@ -6,13 +6,20 @@
 package main
 
 import (
+	"log"
 	ntpservice "ntpservice/app"
+	"ntpservice/migration"
 	"os"
 )
 
 func main() {
+	lastSyncTimeMigration := migration.New()
+	lastSyncTimeMigration.Run()
 
 	ntpServiceApp := ntpservice.CreateServiceApp()
 	ntpServiceApp.StartApp()
-	ntpServiceApp.StartGRPC(os.Args)
+	if err := ntpServiceApp.StartGRPC(os.Args); err != nil {
+		log.Printf("Cannot start gRPC server! : %s \n", err)
+		return
+	}
 }
