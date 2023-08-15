@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"os/user"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -19,10 +20,10 @@ import (
 	ntpcf "ntpservice/internal/ntpconfigurator"
 	"os"
 
-	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type DeviceModelService interface {
@@ -173,7 +174,11 @@ func (n ntpServer) SetNtpServer(ctx context.Context, serverList *v1.Ntp) (*empty
 	ntpSettingTime := currentTime.Format("2006.01.02 15:04:05")
 	log.Println("Ntp Last Setting Time : " + ntpSettingTime)
 
-	f, err := os.OpenFile("/opt/lastntpconfigdate.rec", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err := os.MkdirAll(filepath.Dir(ntpcf.NtpLastConfigPath), ntpcf.DefaultResourcePermissions); err != nil {
+		return &emptypb.Empty{}, status.New(codes.FailedPrecondition, err.Error()).Err()
+	}
+
+	f, err := os.OpenFile(ntpcf.NtpLastConfigPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, ntpcf.DefaultResourcePermissions)
 	if err != nil {
 		log.Println("Error Opening file : ")
 	} else {

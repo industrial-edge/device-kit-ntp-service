@@ -42,7 +42,8 @@ const shell = "bash"
 const restartNtpService = "/usr/bin/systemctl restart ntp.service"
 const ntpDate = "ntpdate "
 const ntpConfigPath = "/etc/ntp.conf"
-const ntplastconfigPath = "/opt/lastntpconfigdate.rec"
+const NtpLastConfigPath = "/etc/iedk/lastntpconfigdate.rec"
+const DefaultResourcePermissions = 0666
 const ntpCheckRunning = "/usr/bin/systemctl is-active --quiet ntp"
 const ntpCheckPeers = "ntpq -pn"
 
@@ -255,7 +256,7 @@ func (n *NtpConfigurator) checkLastConfiguredOn() (string, error) {
 	var LastConfigurationTime string
 	var data []byte
 	var err error
-	data, err = ioutil.ReadFile(ntplastconfigPath)
+	data, err = ioutil.ReadFile(NtpLastConfigPath)
 	if err != nil {
 		log.Println("ReadFile returns error :", err.Error())
 		data = []byte(" ")
