@@ -13,8 +13,7 @@ import (
 )
 
 func main() {
-	lastSyncTimeMigration := migration.New()
-	lastSyncTimeMigration.Run()
+	runMigrations()
 
 	ntpServiceApp := ntpservice.CreateServiceApp()
 	ntpServiceApp.StartApp()
@@ -22,4 +21,22 @@ func main() {
 		log.Printf("Cannot start gRPC server! : %s \n", err)
 		return
 	}
+}
+
+func runMigrations() {
+	runLastConfiguredTimeOfNTPClientMigration()
+	runNtpClassicToNtpSecMigration()
+}
+
+func runNtpClassicToNtpSecMigration() {
+	ntpClassicToNTPSecMigration := migration.NewNTPClassicToNTPSecMigration()
+	if err := ntpClassicToNTPSecMigration.Start(); err != nil {
+		log.Printf("Migration failed, %s", err.Error())
+		os.Exit(1)
+	}
+}
+
+func runLastConfiguredTimeOfNTPClientMigration() {
+	lastConfTimeMigration := migration.NewLastConfigurationTimeOfNTPClientMigration()
+	lastConfTimeMigration.Start()
 }

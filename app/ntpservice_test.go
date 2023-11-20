@@ -119,7 +119,7 @@ func Test_GetNtpServerFailure(t *testing.T) {
 	tApp.configurator = tConfigurator{}
 
 	tApp.StartApp()
-	err := exec.Command("bash", "-c", "touch /tmp/ntp.conf").Run()
+	err := exec.Command("bash", "-c", "mkdir -p /tmp/ntpsec && touch /tmp/ntpsec/ntp.conf").Run()
 	t.Log(err)
 	if err != nil {
 		assert.Nil(t, err, "Did not get expected result. Wanted: Nil, got: %q", err)

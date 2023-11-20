@@ -15,8 +15,6 @@ type tOsUtils struct{}
 
 type tOsUtilsStatus struct{}
 
-type tOsUtilsStatuswithError struct{}
-
 func (o tOsUtils) Commander(command string) ([]byte, error) {
 	//out, err := exec.Command(Shell, "-c", command).Output()
 	dummyStr := []byte("commander called")
@@ -26,7 +24,7 @@ func (o tOsUtils) Commander(command string) ([]byte, error) {
 func (o tOsUtilsStatus) Commander(command string) ([]byte, error) {
 	var retval string
 	var err error
-	if command == "systemctl is-active --quiet ntp" {
+	if command == "systemctl is-active --quiet ntpsec" {
 		retval = " "
 		err = errors.New("\nError system is active")
 	} else if command == "systemctl is-active --quiet ntpXYZ" {
@@ -40,7 +38,7 @@ func (o tOsUtilsStatus) Commander(command string) ([]byte, error) {
 			"*193.30.121.7    131.188.3.223    2 u   35  256  377   64.087   40.219  13.950" +
 			"+198.251.86.68   82.64.45.50      2 u   62  256  377   74.710   29.980  21.180"
 		err = nil
-	} else if command == "touch /etc/ntp.conf" {
+	} else if command == "mkdir -p /etc/ntpsec && touch /etc/ntpsec/ntp.conf" {
 		err = errors.New("\nError system is active")
 	}
 
@@ -59,7 +57,7 @@ func Test_WriteConfiguration_WithValidArgument(t *testing.T) {
 
 	tN := prepareNtpConfigurator()
 
-	err := exec.Command("bash", "-c", "touch /etc/ntp.conf").Run()
+	err := exec.Command("bash", "-c", "mkdir -p /etc/ntpsec && touch /etc/ntpsec/ntp.conf").Run()
 	if err != nil {
 		//assert.Nil(t, err, "Did not get expected result. Wanted: Nil, got: %q", err)
 	}
@@ -71,7 +69,7 @@ func Test_WriteConfiguration_WithValidArgument(t *testing.T) {
 
 func Test_GetCurrentNtpServers(t *testing.T) {
 	tN := prepareNtpConfigurator()
-	err := exec.Command("bash", "-c", "touch /etc/ntp.conf").Run()
+	err := exec.Command("bash", "-c", "mkdir -p /etc/ntpsec && touch /etc/ntpsec/ntp.conf").Run()
 	if err != nil {
 		assert.Nil(t, err, "Did not get expected result. Wanted: Nil, got: %q", err)
 	}
