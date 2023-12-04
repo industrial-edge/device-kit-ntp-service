@@ -8,7 +8,6 @@ package ntpconfigurator
 
 import (
 	"bufio"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -39,13 +38,18 @@ type NtpConfigurator struct {
 }
 
 const shell = "bash"
-const restartNtpService = "/usr/bin/systemctl restart ntp.service"
-const ntpDate = "ntpdate "
-const ntpConfigPath = "/etc/ntp.conf"
+const ntpSecConfigPath = "/etc/ntpsec/ntp.conf"
 const NtpLastConfigPath = "/etc/iedk/lastntpconfigdate.rec"
 const DefaultResourcePermissions = 0666
-const ntpCheckRunning = "/usr/bin/systemctl is-active --quiet ntp"
+const ntpSecCheckRunning = "/usr/bin/systemctl is-active --quiet ntpsec"
 const ntpCheckPeers = "ntpq -pn"
+const StartNtpSecService = "/usr/bin/systemctl start ntpsec.service"
+const StopNtpSecService = "/usr/bin/systemctl stop ntpsec.service"
+
+// UpdateSystemTimeCmd If the servers are not reachable `ntpd -gq` will never end,
+// this will block ntpservice indefinitely, `timeout` used to prevent this behavior
+const UpdateSystemTimeCmd = "timeout 20 ntpd -gq"
+const CommanderError = "Command(): Error command failed!"
 
 // NewNtpConfigurator It returns a value of type *NtpConfigurator.
 func NewNtpConfigurator(utVal Utils) *NtpConfigurator {
@@ -53,9 +57,9 @@ func NewNtpConfigurator(utVal Utils) *NtpConfigurator {
 	return &ntpconfigurator
 }
 
-// ReplaceCurrentNtpServersOrPools Deletes the lines starting with pool and server prefixes in /etc/ntp.conf file and all blank lines in the file.
+// ReplaceCurrentNtpServersOrPools Deletes the lines starting with pool and server prefixes in /etc/ntpsec/ntp.conf file and all blank lines in the file.
 func (n *NtpConfigurator) ReplaceCurrentNtpServersOrPools(serverList []string) {
-	file, err := os.Open(ntpConfigPath)
+	file, err := os.Open(ntpSecConfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,43 +79,47 @@ func (n *NtpConfigurator) ReplaceCurrentNtpServersOrPools(serverList []string) {
 	}
 	output := builder.String()
 
-	// Changes are rewritten to /etc/ntp.conf file.
-	err = ioutil.WriteFile(ntpConfigPath, []byte(output), 0644)
+	// Changes are rewritten to /etc/ntpsec/ntp.conf file.
+	err = os.WriteFile(ntpSecConfigPath, []byte(output), 0644)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
 
-// WriteConfiguration The configurations sent by the client are tested and written to /etc/ntp.conf file. Then the ntp service is restarted.
+// WriteConfiguration The configurations sent by the client are tested and written to /etc/ntpsec/ntp.conf file. Then the ntp service is restarted.
 func (n *NtpConfigurator) WriteConfiguration(serverList []string) error {
-	var command string
-	var out []byte
-	var err error
-
-	// The ntp configurations entered by the user are controlled by the ntpdate command.
-	for _, val := range serverList {
-		val = strings.Split(val, " ")[0]
-		command = ntpDate + "-u " + val
-		out, err = n.Ut.Commander(command)
-		if err != nil {
-			log.Println("Command(): Error command failed!", command, err)
-			continue
-		} else {
-			log.Println("Command(): ", command, "-> out:", string(out))
-			break
-		}
-	}
 	n.ReplaceCurrentNtpServersOrPools(serverList)
-	// After the changes, the ntp service is restarted.
-	out, err = n.Ut.Commander(restartNtpService)
+
+	err := UpdateSystemTime(n.Ut)
+	if err != nil {
+		log.Printf("Could not update system time! : %s", err.Error())
+	} else {
+		log.Printf("Command(`%s`) execution is successfull and system time updated", UpdateSystemTimeCmd)
+	}
 	return nil
 }
 
-// GetCurrentNtpServers Lines starting with the server prefix in the /etc/ntp.conf file are sent to the client.
+func UpdateSystemTime(cmdUtils Utils) error {
+	if _, err := cmdUtils.Commander(StopNtpSecService); err != nil {
+		log.Println(CommanderError, StopNtpSecService, err)
+		return err
+	}
+	if _, err := cmdUtils.Commander(UpdateSystemTimeCmd); err != nil {
+		log.Println(CommanderError, UpdateSystemTimeCmd, err)
+		return err
+	}
+	if _, err := cmdUtils.Commander(StartNtpSecService); err != nil {
+		log.Println(CommanderError, StartNtpSecService, err)
+		return err
+	}
+	return nil
+}
+
+// GetCurrentNtpServers Lines starting with the server prefix in the /etc/ntpsec/ntp.conf file are sent to the client.
 func (n *NtpConfigurator) GetCurrentNtpServers() ([]string, error) {
 	var ntpServers []string
-	// The contents of /etc/ntp.conf file in the device are read.
-	input, err := ioutil.ReadFile(ntpConfigPath)
+	// The contents of /etc/ntpsec/ntp.conf file in the device are read.
+	input, err := os.ReadFile(ntpSecConfigPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -131,7 +139,7 @@ func (n *NtpConfigurator) GetNtpStatus() (*v1.Status, error) {
 	status := &v1.Status{}
 	var err error
 
-	status.IsNtpServiceRunning, err = n.checkRunning(ntpCheckRunning)
+	status.IsNtpServiceRunning, err = n.checkRunning(ntpSecCheckRunning)
 	status.PeerDetails, err = n.checkSynced()
 	status.IsSynced, status.LastSyncTime, err = n.getSyncedTime(status.PeerDetails)
 	status.LastConfigurationTime, err = n.checkLastConfiguredOn()
@@ -162,7 +170,7 @@ func (n *NtpConfigurator) checkSynced() ([]*v1.PeerDetails, error) {
 	command := ntpCheckPeers
 	out, err = n.Ut.Commander(command)
 	if err != nil {
-		log.Println("Command(): Error command failed!", command, err)
+		log.Println(CommanderError, command, err)
 		return PeerDetails, nil
 	}
 	log.Println("Command(): ", command, "-> out:\n", string(out))
@@ -256,7 +264,7 @@ func (n *NtpConfigurator) checkLastConfiguredOn() (string, error) {
 	var LastConfigurationTime string
 	var data []byte
 	var err error
-	data, err = ioutil.ReadFile(NtpLastConfigPath)
+	data, err = os.ReadFile(NtpLastConfigPath)
 	if err != nil {
 		log.Println("ReadFile returns error :", err.Error())
 		data = []byte(" ")

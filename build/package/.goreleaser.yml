@@ -45,9 +45,7 @@ nfpms:
 
   # Packages your package depends on.
   dependencies:
-    - ntp
-    - ntpdate
-    - systemd
+    - ntpsec
 
   contents:
     - src: "dm-ntp.service"

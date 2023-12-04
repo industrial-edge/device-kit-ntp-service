@@ -3,6 +3,7 @@ package mocks
 import (
 	"github.com/stretchr/testify/mock"
 	"io/fs"
+	. "ntpservice/utils/files"
 	"time"
 )
 
@@ -14,6 +15,24 @@ type MockFileInfo struct {
 	mock.Mock
 }
 
+func (mock *MockFileSystem) Open(path string) (FileIO, error) {
+	args := mock.Called(path)
+
+	return args.Get(0).(*MockFileIO), args.Error(1)
+}
+
+func (mock *MockFileSystem) OpenFile(path string, flag int, perm fs.FileMode) (FileIO, error) {
+	args := mock.Called(path, flag, perm)
+
+	return args.Get(0).(*MockFileIO), args.Error(1)
+}
+
+func (mock *MockFileSystem) Create(name string) (FileIO, error) {
+	args := mock.Called(name)
+
+	return args.Get(0).(*MockFileIO), args.Error(1)
+}
+
 func (mock *MockFileSystem) MkdirAll(path string, perm fs.FileMode) error {
 	return mock.Called(path, perm).Error(0)
 }
@@ -21,6 +40,10 @@ func (mock *MockFileSystem) MkdirAll(path string, perm fs.FileMode) error {
 func (mock *MockFileSystem) Stat(name string) (fs.FileInfo, error) {
 	args := mock.Called(name)
 	return args.Get(0).(*MockFileInfo), args.Error(1)
+}
+
+func (mock *MockFileSystem) Remove(path string) error {
+	return mock.Called(path).Error(0)
 }
 
 func (mock *MockFileSystem) Move(source string, target string) error {
