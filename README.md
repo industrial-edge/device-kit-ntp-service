@@ -38,10 +38,11 @@ _Ntp Service_ is developed in the go programming language and gRPC. More informa
 
 ### How do I verify dependencies and download them?
 
-The ntp microservice is dependent on the ntp service and the ntpdate binary. The following command is run to verify that these dependencies exist within the device.
+The ntp microservice is dependent on the ntpsec service and the ntpq binary. The following command is run to verify that these dependencies exist within the device.
 
 ```bash
-dpkg -l | egrep "ii  ntp|ii  ntpdate"
+dpkg -l | egrep "ii  ntpsec"
+ntpq --version
 ```
 
 If you get an output after running the command, these dependencies already installed on device.
@@ -50,8 +51,8 @@ If these dependencies are not installed in the device, installation can be perfo
 
 ```bash
 sudo apt-get update
-sudo apt-get install ntp
-sudo apt-get install ntpdate
+sudo apt-get install ntpsec
+// The ntpq binary will come by default when ntpsec is installed.
 ```
 
 # Contributing IE Device Kit Repository
