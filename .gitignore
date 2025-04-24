@@ -9,3 +9,10 @@ logs\\pclint-importer/
 **/coverage_global.txt
 **/*report.out
 build/package/dist**
+.cache/*
+.gitlab/*
+build/package/govet-report.out
+build/package/golint-report.out
+build/package/golangcilint-report.xml
+build/package/gosec-report.json
+build/package/bin
