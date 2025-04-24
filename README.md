@@ -9,6 +9,18 @@ Purpose of these repositories is to share reference implementation of IE Device 
 
 NTP Service is a gRPC & Go based NTP configurator microservice for Edge Devices.
 
+```bash
+    //Set ntp server
+    rpc SetNtpServer(Ntp) returns(google.protobuf.Empty);
+   
+    //Returns ntp servers
+    rpc GetNtpServer(google.protobuf.Empty) returns(Ntp);
+  
+    //Returns NTP Status message.
+    rpc GetStatus(google.protobuf.Empty) returns (Status);
+
+```
+
 ## Overview
 
 _Ntp Service_ is developed in the go programming language and gRPC. More information can be found [here](https://grpc.io/docs/). The Ntp service runs as a systemd service within the device that has a debian-based operating system.
