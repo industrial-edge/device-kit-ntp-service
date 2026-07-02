@@ -1,5 +1,5 @@
 /*
- * Copyright © Siemens 2020 - 2025. ALL RIGHTS RESERVED.
+ * Copyright © Siemens 2020 - 2026. ALL RIGHTS RESERVED.
  * Licensed under the MIT license
  * See LICENSE file in the top-level directory
  */
@@ -35,6 +35,7 @@ func (o OsUtils) Commander(command string) ([]byte, error) {
 // NtpConfigurator struct
 type NtpConfigurator struct {
 	Ut Utils
+	ConfigPath string
 }
 
 const shell = "bash"
@@ -51,9 +52,13 @@ const StopNtpSecService = "/usr/bin/systemctl stop ntpsec.service"
 const UpdateSystemTimeCmd = "timeout 20 ntpd -gq"
 const CommanderError = "Command(): Error command failed!"
 
+
 // NewNtpConfigurator It returns a value of type *NtpConfigurator.
 func NewNtpConfigurator(utVal Utils) *NtpConfigurator {
-	var ntpconfigurator = NtpConfigurator{Ut: utVal}
+	var ntpconfigurator = NtpConfigurator{
+		Ut:         utVal,
+		ConfigPath: NtpLastConfigPath,
+	}
 	return &ntpconfigurator
 }
 
@@ -261,15 +266,21 @@ func (n *NtpConfigurator) getNtpPeerWhenValue(PeerLine []string) (int32, error) 
 
 // ntpStatusCheckLastConfiguredOn get first ntp setting time from file.
 func (n *NtpConfigurator) checkLastConfiguredOn() (string, error) {
-	var LastConfigurationTime string
-	var data []byte
-	var err error
-	data, err = os.ReadFile(NtpLastConfigPath)
+	_, err := os.Stat(n.ConfigPath)
 	if err != nil {
-		log.Println("ReadFile returns error :", err.Error())
-		data = []byte(" ")
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+        log.Println("Stat returns error:", err.Error())
+		return "", err
 	}
-	LastConfigurationTime = string(data)
-	log.Println("LastConfigurationTime-->", LastConfigurationTime)
-	return LastConfigurationTime, nil
+
+	data, err := os.ReadFile(n.ConfigPath)
+	if err != nil {
+		log.Println("ReadFile returns error:", err.Error())
+		return "", err
+	}
+
+	log.Println("LastConfigurationTime-->", string(data))
+	return string(data), nil
 }

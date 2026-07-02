@@ -1,5 +1,5 @@
 /*
- * Copyright © Siemens 2020 - 2025. ALL RIGHTS RESERVED.
+ * Copyright © Siemens 2020 - 2026. ALL RIGHTS RESERVED.
  * Licensed under the MIT license
  * See LICENSE file in the top-level directory
  */
@@ -9,6 +9,7 @@ package ntpconfigurator
 import (
 	"errors"
 	"log"
+	"os"
 	v1 "ntpservice/api/siemens_iedge_dmapi_v1"
 	"os/exec"
 	"strings"
@@ -207,4 +208,32 @@ func Test_ntpStatusCheckLastConfiguredOn(t *testing.T) {
 	tN := NewNtpConfigurator(tUt)
 	_, err := tN.checkLastConfiguredOn()
 	assert.Nil(t, err, "Did not get expected result. Wanted: Nil, got: %q", err)
+}
+
+func Test_checkLastConfiguredOn_FileDoesNotExist(t *testing.T) {
+	var tUt Utils = tOsUtilsStatus{}
+	tN := NewNtpConfigurator(tUt)
+	
+	result, err := tN.checkLastConfiguredOn()
+	
+	assert.Nil(t, err, "Did not get expected result. Wanted: Nil, got: %v", err)
+	assert.Equal(t, "", result, "Expected empty string when file doesn't exist, got: %q", result)
+}
+
+func Test_checkLastConfiguredOn_Logs(t *testing.T) {
+	var tUt Utils = tOsUtilsStatus{}
+	tN := NewNtpConfigurator(tUt)
+	tempDir := t.TempDir()
+	tN.ConfigPath = tempDir
+
+	var logOutput strings.Builder
+	log.SetOutput(&logOutput)
+	defer log.SetOutput(os.Stderr)
+
+	_, _ = tN.checkLastConfiguredOn()
+
+	logContent := logOutput.String()
+	errorCount := strings.Count(logContent, "ReadFile returns error")
+	
+	assert.Equal(t, 1, errorCount, "Did not get expected result. Wanted error to be logged 1 time (once per call), but it was logged %d times", errorCount)
 }
