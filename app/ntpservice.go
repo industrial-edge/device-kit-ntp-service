@@ -74,14 +74,12 @@ func chownSocket(address string, userName string, groupName string) error {
 		err4 := os.Chown(address, uid, gid)
 		if err3 != nil || err4 != nil {
 			return errors.New("file permissions failed")
-		} else {
-			log.Println(uid, " : ", gid)
-			return nil
 		}
-
-	} else {
-		return errors.New("file permissions failed")
+		log.Println(uid, " : ", gid)
+		return nil
 	}
+
+	return errors.New("file permissions failed")
 }
 
 // StartGRPC Necessary actions are taken to start the GRPC server.
